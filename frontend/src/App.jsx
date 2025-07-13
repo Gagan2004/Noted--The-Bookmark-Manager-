@@ -13,6 +13,7 @@ function App() {
         <Routes>
           <Route path="/notes" element={<Notes />} />
           <Route path="/bookmarks" element={<Bookmarks />} />
+          <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Routes>

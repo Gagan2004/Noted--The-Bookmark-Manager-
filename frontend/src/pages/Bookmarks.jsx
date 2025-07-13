@@ -35,7 +35,7 @@ export default function Bookmarks() {
         }
       }
 
-      const res = await axios.get(`http://localhost:5000/api/bookmarks?${params.toString()}`, {
+      const res = await axios.get(`https://noted-the-bookmark-manager.onrender.com/api/bookmarks?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -51,7 +51,7 @@ export default function Bookmarks() {
   const handleCreate = async e => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/bookmarks', {
+      await axios.post('https://noted-the-bookmark-manager.onrender.com/api/bookmarks', {
         ...form,
         tags: form.tags.split(',')
           .map(tag => tag.trim())
@@ -69,7 +69,7 @@ export default function Bookmarks() {
 
   const handleDelete = async id => {
     try {
-      await axios.delete(`http://localhost:5000/api/bookmarks/${id}`, {
+      await axios.delete(`https://noted-the-bookmark-manager.onrender.com/api/bookmarks/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchBookmarks();
@@ -81,7 +81,7 @@ export default function Bookmarks() {
 
   const toggleFavorite = async id => {
     try {
-      await axios.patch(`http://localhost:5000/api/bookmarks/${id}/favorite`, {}, {
+      await axios.patch(`https://noted-the-bookmark-manager.onrender.com/api/bookmarks/${id}/favorite`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchBookmarks();
