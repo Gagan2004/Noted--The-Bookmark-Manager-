@@ -1,6 +1,62 @@
+# 🛠️ Setup Instructions
+
+Follow the steps below to run the project locally.
+
+---
+
+## 📦 Backend Setup (Node.js + Express + MongoDB)
+
+### 1. Navigate to backend folder
+```bash
+cd backend
+
+```
+
+### 2. Install dependencies
+```bash
+npm install
+```
+
+### 3. Create a .env file in the backend folder
+```bash
+PORT=5000
+MONGO_URI=<your_mongodb_connection_string>
+JWT_SECRET=<your_jwt_secret_key>
+```
+
+### 4. Start the backend server
+```bash
+npm run dev
+```
+The backend server will be running at: http://localhost:5000/api
+
+
+## 💻 Frontend Setup (React + Vite + Tailwind CSS)
+
+### 1. Navigate to frontend folder
+```bash
+cd frontend
+```
+
+### 2. Install dependencies
+```bash
+npm install
+```
+
+3. Start the frontend dev server
+```bash
+npm run dev
+```
+
+
+
+
+
+
+
 # ==================================
 # Personal Notes & Bookmark API cURL Commands
-# ==================================
+
 # --- AUTHENTICATION ---
 ✅ 
 # ✅ Register a new user
