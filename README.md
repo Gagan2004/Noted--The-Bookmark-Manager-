@@ -4,6 +4,13 @@ Follow the steps below to run the project locally.
 
 ---
 
+## Clone The REPOsitory
+
+```bash
+git clone https://github.com/Gagan2004/Noted--The-Bookmark-Manager-
+```
+
+
 ## 📦 Backend Setup (Node.js + Express + MongoDB)
 
 ### 1. Navigate to backend folder
