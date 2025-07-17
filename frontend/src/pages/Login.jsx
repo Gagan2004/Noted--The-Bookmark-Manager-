@@ -85,7 +85,7 @@ export default function Login() {
     try {
       const res = await axios.post('https://noted-the-bookmark-manager.onrender.com/api/auth/login', testCredentials);
       localStorage.setItem('token', res.data.token);
-      navigate('/notes');
+      navigate('/bookmarks');
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');
     } finally {
@@ -105,7 +105,7 @@ export default function Login() {
             className="bg-green-600 hover:bg-green-700 text-gray-100 font-bold py-2 px-4 rounded disabled:bg-gray-500 disabled:cursor-not-allowed"
             disabled={loading}
           >
-            Login with TESTING CREDENTIALS
+            LOGIN WITH TESTING CREDENTIALS FOR RECRUITERS
           </button>
         </div>
 
@@ -115,6 +115,7 @@ export default function Login() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
+            <h3>Please WAIT...this might take upto 30 sec</h3>
           </div>
         ) : (
           <>

@@ -3,6 +3,57 @@ import axios from 'axios';
 import BookmarkCard from '../components/BookmarkCard';
 import debounce from 'lodash.debounce';
 
+// NEW: Helper function to generate a summary from a URL
+const getSummary = async (url) => {
+  if (!url) return '';
+  try {
+    const targetUrl = encodeURIComponent(url);
+    const res = await fetch(`https://r.jina.ai/http://${targetUrl}`);
+    if (!res.ok) throw new Error('API request to Jina AI failed');
+    const summary = await res.text();
+    // Trim summary and return
+    return summary.length > 1000 ? summary.substring(0, 1000) + '...' : summary;
+  } catch (err) {
+    console.error('Failed to get summary:', err);
+    return ' API REQUEST FAILED::Summary could not be generated.'; // Return a consistent fallback string
+  }
+};
+
+// NEW: Helper function to generate a clean title from a URL
+const generateTitleFromUrl = (urlString) => {
+  try {
+    const url = new URL(urlString);
+    // Try to get a title from the last part of the URL path
+    const pathSegments = url.pathname.split('/').filter(Boolean);
+    let potentialTitle = pathSegments.pop() || '';
+
+    if (potentialTitle) {
+      // Clean up the segment
+      potentialTitle = potentialTitle.replace(/\.(html|htm|php)$/i, '');
+      potentialTitle = potentialTitle.replace(/[-_]/g, ' ');
+      // Capitalize words
+      potentialTitle = potentialTitle
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+      
+      if (potentialTitle.trim().length > 2) {
+        return potentialTitle;
+      }
+    }
+    
+    // Fallback to a cleaned-up hostname
+    let hostname = url.hostname.replace(/^www\./, '');
+    hostname = hostname.split('.')[0];
+    return hostname.charAt(0).toUpperCase() + hostname.slice(1);
+
+  } catch (error) {
+    console.error('Invalid URL for title generation:', urlString);
+    return 'New Bookmark'; // Fallback for invalid URLs
+  }
+};
+
+
 export default function Bookmarks() {
   const [bookmarks, setBookmarks] = useState([]);
   const [form, setForm] = useState({ url: '', title: '', description: '', tags: '' });
@@ -11,6 +62,7 @@ export default function Bookmarks() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   const token = localStorage.getItem('token');
 
@@ -48,23 +100,59 @@ export default function Bookmarks() {
     }
   };
 
+  // UPDATED: handleCreate now performs auto-generation for empty fields
   const handleCreate = async e => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+
     try {
-      await axios.post('https://noted-the-bookmark-manager.onrender.com/api/bookmarks', {
-        ...form,
-        tags: form.tags.split(',')
+      let { url, title, description, tags } = form;
+
+      // Auto-generate title if the field is empty
+      if (!title.trim() && url.trim()) {
+        title = generateTitleFromUrl(url);
+      }
+
+      // Auto-generate description if the field is empty
+      if (!description.trim() && url.trim()) {
+        description = await getSummary(url);
+      }
+      
+      const payload = {
+        url,
+        title,
+        description,
+        tags: tags.split(',')
           .map(tag => tag.trim())
           .filter(tag => tag.length > 0),
-      }, {
+      };
+
+      await axios.post('https://noted-the-bookmark-manager.onrender.com/api/bookmarks', payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
       setForm({ url: '', title: '', description: '', tags: '' });
-      fetchBookmarks();
+      await fetchBookmarks(); // Re-fetch bookmarks which will also handle loading state
+    
     } catch (err) {
       console.error('Error creating bookmark:', err);
       setError('Failed to create bookmark');
+      setLoading(false); // Ensure loading is disabled on error
     }
+  };
+  
+  // UPDATED: This function now uses the new getSummary helper
+  const handleGenerateSummary = async () => {
+    if (!form.url.trim() || isSummarizing) return;
+
+    setIsSummarizing(true);
+    setError(null);
+    
+    const summary = await getSummary(form.url);
+    setForm(prevForm => ({ ...prevForm, description: summary }));
+    
+    setIsSummarizing(false);
   };
 
   const handleDelete = async id => {
@@ -97,14 +185,12 @@ export default function Bookmarks() {
     return () => debounced.cancel();
   }, [search, selectedTags]);
 
-  // Auto-collapse form when searching/filtering
   useEffect(() => {
     if (search.trim() || selectedTags.length > 0) {
       setShowCreateForm(false);
     }
   }, [search, selectedTags]);
 
-  // Extract all unique tags from bookmarks
   const allTags = Array.from(new Set(
     bookmarks.flatMap(bookmark => 
       (bookmark.tags || [])
@@ -129,6 +215,7 @@ export default function Bookmarks() {
   };
 
   return (
+    // ...The JSX for the component remains unchanged from the previous version
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Search and Tags */}
@@ -232,9 +319,17 @@ export default function Bookmarks() {
                   placeholder="Bookmark URL"
                   value={form.url}
                   onChange={e => setForm({ ...form, url: e.target.value })}
-                  className="w-full p-4 bg-slate-900/50 border border-slate-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-transparent text-white placeholder-slate-400 transition-all duration-200"
+                  className="w-full p-4 pr-36 bg-slate-900/50 border border-slate-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-transparent text-white placeholder-slate-400 transition-all duration-200"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={handleGenerateSummary}
+                  disabled={!form.url.trim() || isSummarizing}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-700 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSummarizing ? 'Generating...' : '✨ Generate'}
+                </button>
               </div>
               
               <div className="relative">
@@ -318,4 +413,4 @@ export default function Bookmarks() {
       </div>
     </div>
   );
-} 
+}
